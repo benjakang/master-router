@@ -1,0 +1,13 @@
+server:
+  port: 8686
+
+spring:
+  thymeleaf:
+    cache: false
+
+file:
+  path: "C://Users//kangbingjie//Desktop//my_poss.py"
+master:
+  ip: "localhost"
+  port: "60001"
+

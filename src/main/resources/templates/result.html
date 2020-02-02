@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>分代结果</title>
+</head>
+<body>
+    <h1>结果总览</h1>
+    <div>
+        <h2>总体结果</h2>
+        <p>总耗时:<span th:text="${totalTime}"/>,
+            总个体数:<span th:text="${evaNum}"/>,
+            平均每代耗时:<span th:text="${avgTime}"/></p>
+        <p>最佳效果:<span th:text="${bestFitness}"/>,
+            最佳个体:<span th:text="${bestSolution}"/></p>
+    </div>
+    <div>
+
+        <div th:each="info:${list}">
+            <h3 th:text="个体"></h3>
+            <div>总耗时:<span th:text="${info.timecost}"/>,
+                当前代数:<span th:text="${info.iteration}"/>,
+                进度:<span th:text="${info.percentage}"/>
+            </div>
+            <div>当前效果:<span th:text="${info.fitness}"/>,
+                当前个体展示:
+                <span th:text="${info.solution}"></span>
+            </div>
+        </div>
+
+        <div th:each="arrayS:${arrays}">
+            <div th:text="${arrayS}"></div>
+        </div>
+    </div>
+</body>
+
+<script language="JavaScript">
+    setTimeout(function(){location.reload()},1000); //指定1秒刷新一次
+</script>
+</html>
