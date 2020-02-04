@@ -22,6 +22,9 @@ public class ResultController {
     @Autowired
     Master master;
 
+    @Autowired
+    APIController apiController;
+
     @GetMapping(value = "/result")
     public String result(Model model) {
         List<EvaInfo> list = new ArrayList<>();
@@ -63,6 +66,11 @@ public class ResultController {
         model.addAttribute("avgTime", avgTime);
         model.addAttribute("bestFitness", bestFitness);
         model.addAttribute("bestSolution", bestSolution);
+
+        model.addAttribute("iter", apiController.itera);
+        model.addAttribute("k", apiController.k);
+        model.addAttribute("workers", apiController.workers);
+        model.addAttribute("doRefresh", apiController.doRefresh);
 
         return "result";
     }

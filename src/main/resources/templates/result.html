@@ -1,40 +1,168 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>分代结果</title>
+
+    <!--本地导入-->
+
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap-theme.min.css">
+
+    <!--[if lt IE 9]>
+    <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="/js/jquery-3.3.1.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+
+
+    <!--cdn在线导入-->
+    <!--<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>-->
+    <!--<link href="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">-->
+    <!--<script src="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
 </head>
 <body>
-    <h1>结果总览</h1>
-    <div>
-        <h2>总体结果</h2>
-        <p>总耗时:<span th:text="${totalTime}"/>,
-            总个体数:<span th:text="${evaNum}"/>,
-            平均每代耗时:<span th:text="${avgTime}"/></p>
-        <p>最佳效果:<span th:text="${bestFitness}"/>,
-            最佳个体:<span th:text="${bestSolution}"/></p>
-    </div>
-    <div>
+    <h2 align="center">分代计算展示界面</h2>
+    <h5 class="page-header"></h5>
 
+    <!--输入框组-->
+    <div class="container" style="margin-bottom: 20px">
+        <div class="input-group" style="margin-bottom: 10px;width: 400px;">
+            <span class="input-group-addon" style="width: 150px">计算代数/iter：</span>
+            <input id="iter" type="text" class="form-control" placeholder="比如：100 (默认100)" th:value="${iter}"/>
+        </div>
+        <div class="input-group" style="margin-bottom: 10px;width: 400px;">
+            <span class="input-group-addon" style="width: 150px">问题规模/k：</span>
+            <input id="k" type="text" class="form-control" placeholder="比如：5 (默认5)" th:value="${k}"/>
+        </div>
+        <div class="input-group" style="margin-bottom: 10px;width: 400px;">
+            <span class="input-group-addon" style="width: 150px">启动个数/workers：</span>
+            <input id="workers" type="text" class="form-control" placeholder="比如：3 (默认3)" th:value="${workers}"/>
+        </div>
+    </div>
+
+    <!--button-->
+    <div class="container" align="left">
+
+        <button class="btn btn-large btn-info" onclick="file1()" style="margin-right: 20px">上传文件</button>
+        <button class="btn btn-large btn-success" onclick="start1()" style="margin-right: 20px">开始运行</button>
+        <button class="btn btn-large btn-warning" onclick="stop1()" style="margin-right: 20px">结束运行</button>
+        <button class="btn btn-large btn-danger" onclick="clear1()" style="margin-right: 20px">清空状态</button>
+
+    </div>
+    <script>
+        function file1(){
+            var url = "../file";
+            window.location.href= url;
+        }
+        function start1(){
+
+            var iter = document.getElementById('iter').value;
+            var k = document.getElementById('k').value;
+            var workers = document.getElementById('workers').value;
+
+            if (iter == "") {
+                iter = "100";
+            }
+            if (k == "") {
+                k = "5";
+            }
+            if (workers == "") {
+                workers = "3";
+            }
+            var url = "../start/"+"iter="+iter+"&k="+k+"&eva="+workers;
+
+            document.getElementById('iter').value = "100";
+            window.location.href= url;
+        }
+        function stop1(){
+            var url = "../stop";
+            window.location.href= url;
+        }
+        function clear1(){
+            var url = "../clear";
+            window.location.href= url;
+        }
+    </script>
+
+    <!--总体展示-->
+    <h5 class="page-header"></h5>
+    <div class="container" align="left">
+        <h4>总体结果</h4>
+        <table class="table table-bordered" style="width: 70%; height: auto;">
+            <thead>
+                <tr>
+                    <th width="100px">总耗时</th>
+                    <th width="100px">总个体数</th>
+                    <th width="100px">平均每代耗时</th>
+                    <th width="100px">最佳效果</th>
+                    <th width="200px">最佳个体</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td><span th:text="${totalTime}"/></td>
+                    <td><span th:text="${evaNum}"/></td>
+                    <td><span th:text="${avgTime}"/></td>
+                    <td><span th:text="${bestFitness}"/></td>
+                    <td><span th:text="${bestSolution}"/></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!--各个分代个体-->
+    <h5 class="page-header"></h5>
+    <div class="container" align="left">
         <div th:each="info:${list}">
-            <h3 th:text="个体"></h3>
-            <div>总耗时:<span th:text="${info.timecost}"/>,
-                当前代数:<span th:text="${info.iteration}"/>,
-                进度:<span th:text="${info.percentage}"/>
-            </div>
-            <div>当前效果:<span th:text="${info.fitness}"/>,
-                当前个体展示:
-                <span th:text="${info.solution}"></span>
-            </div>
+
+            <h4>个体</h4>
+            <table class="table table-bordered" style="width: 70%; height: auto;">
+                <thead>
+                    <tr>
+                        <th width="100px">总耗时</th>
+                        <th width="100px">当前代数</th>
+                        <th width="100px">进度</th>
+                        <th width="100px">当前效果</th>
+                        <th width="200px">当前个体</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td><span th:text="${info.timecost}"/></td>
+                        <td><span th:text="${info.iteration}"/></td>
+                        <td><span th:text="${info.percentage}"/></td>
+                        <td><span th:text="${info.fitness}"/></td>
+                        <td><span th:text="${info.solution}"/></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div th:each="arrayS:${arrays}">
-            <div th:text="${arrayS}"></div>
-        </div>
+        <!--<div th:each="arrayS:${arrays}">-->
+            <!--<div th:text="${arrayS}"></div>-->
+        <!--</div>-->
+
     </div>
+    <input id="refresh" type="hidden" th:value="${doRefresh}" />
+
 </body>
 
+<!--按后台传来的状态选择性自动刷新-->
 <script language="JavaScript">
-    setTimeout(function(){location.reload()},1000); //指定1秒刷新一次
+     //指定1秒刷新一次
+     var doRefresh = $("#refresh").val();
+     if (doRefresh == "true"){
+         setTimeout(function(){location.reload()},1000);
+     }
+     // alert(doRefresh);
+
 </script>
 </html>

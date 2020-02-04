@@ -1,6 +1,7 @@
 package com.sustc.masterrouter.controller;
 
 
+import com.sustc.masterrouter.domain.Evaluator;
 import com.sustc.masterrouter.service.Master;
 import com.sustc.masterrouter.service.Router;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,43 +12,72 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * RestAPI 访问接口
  *
  * @author Ken
  */
-@RestController
+@Controller
 class APIController {
 
     @Value("${file.path}")
     private String filePath;
 
     @Autowired
+    private Router router;
+
+    @Autowired
     private Master master;
+
+    boolean doRefresh = false;
+
+    int itera = 100;
+
+    int k = 5;
+
+    int workers = 3;
 
 
     @RequestMapping("/file")
     String file() {
         master.file(new File(filePath));
-        return "file!";
+        doRefresh = false;
+        return "redirect:/result";
     }
 
     @RequestMapping("/start/iter={iter}&k={k1}&eva={needEva}")
     String start(@PathVariable int iter, @PathVariable int k1, @PathVariable int needEva) {
         master.start(iter, k1, needEva);
-        return "start!";
+
+        itera = iter;
+        k = k1;
+        workers = needEva;
+        doRefresh = true;
+        return "redirect:/result";
     }
 
     @RequestMapping("/stop")
     String stop() {
         master.stop();
-        return "stop!";
+        doRefresh = false;
+        return "redirect:/result";
     }
 
     @RequestMapping("/query")
     String query() {
         master.query();
-        return "query!";
+        return "redirect:/result";
+    }
+
+    @RequestMapping("/clear")
+    String clear() {
+        List<Evaluator> list = router.getEvaluators();
+        for (Evaluator eva : list) {
+            eva.setEvaInfo(null);
+        }
+        doRefresh = false;
+        return "redirect:/result";
     }
 }

@@ -388,4 +388,8 @@ public class Master {
     public void setEvaInfoList(List<EvaInfo> evaInfoList) {
         this.evaInfoList = evaInfoList;
     }
+
+    public Router getRouter() {
+        return router;
+    }
 }
