@@ -7,7 +7,6 @@ import com.sustc.masterrouter.domain.Evaluator;
 import com.sustc.masterrouter.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -37,13 +36,18 @@ public class Master {
 
     private int k;
 
-    private List<EvaInfo> evaInfoList = new ArrayList<>();
+    private List<EvaInfo> evaInfoList = new LinkedList<>();
 
     private boolean isAutoQuery;
 
     private String fileURL = "accident.txt";
 
     private ExecutorService autoQueryPoolService = Executors.newFixedThreadPool(1);
+
+    private Queue<List<List<Integer>>> populationQueue = new LinkedList<>();
+
+    @Autowired
+    private AllTime allTime;
 
     /**
      * 将本地文件上传给云盘
@@ -55,6 +59,8 @@ public class Master {
      *
      */
     public void file(File f){
+        long s = System.currentTimeMillis();
+
         //向云盘上传文件
         //upload(f,cloudURL);
         //生成MD5
@@ -74,7 +80,7 @@ public class Master {
         for (int i = 0; i < router.getEvaluators().size(); i++) {
             String filedMsg = null;
             try {
-                filedMsg = router.getFiledQueue().poll(200, TimeUnit.MILLISECONDS);
+                filedMsg = router.getFiledQueue().poll(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -88,6 +94,10 @@ public class Master {
             System.out.println("filed消息为：" + filedJson.toJSONString());
 
         }
+
+        long e = System.currentTimeMillis();
+        allTime.fileLogicTime += (e-s);
+        allTime.fileCount++;
     }
 
     /**
@@ -98,31 +108,41 @@ public class Master {
      */
 
     public void start(int iter, int k1, int needEva){
+        long s = System.currentTimeMillis();
 
         iteration = iter;
         k = k1;
 
-        //生成随机population(该关键字丢给broadcast方法生成)
-        List<List<Integer>> population = null;
+        //生成足够的随机population并放入queue中
+        int curPopuNum = populationQueue.size();
+        for (int i = 0; i < needEva - curPopuNum; i++) {
+            List<List<Integer>> population = generatePopulation(435, getK());
+            populationQueue.offer(population);
+        }
+
+        long m = System.currentTimeMillis();
+        allTime.startLogicTime1 += (m-s);
 
         //打包成start消息并广播
-        JSONObject startJson = MsgUtil.createStart("", population, iteration, k);
-        leftNeedEva = router.broadcastStartMsg(startJson, needEva, this);
+        JSONObject startJson = MsgUtil.createStart("", populationQueue.peek(), iteration, k);
+        leftNeedEva = router.broadcastStartMsg(startJson, needEva, populationQueue);
 
         //接收started消息
-        for (int i = 0; i < needEva; i++) {
+        for (int i = 0; i < needEva - leftNeedEva; i++) {
             String startedMsg = null;
             try {
-                startedMsg = router.getStartedQueue().poll(200, TimeUnit.MILLISECONDS);
+                startedMsg = router.getStartedQueue().poll(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             if(startedMsg == null){
                 break;
             }
-            //接收到started消息，即开始自动查询所有Eva
-            isAutoQuery = true;
-            autoQuery(400);
+            //接收到started消息，即开始自动查询所有Eva(没启动则启动，启动了就不管了)
+            if (!isAutoQuery) {
+                isAutoQuery = true;
+                autoQuery(400);
+            }
 
             JSONObject startedJson = (JSONObject) JSONUtil.stringToBean(startedMsg, new Object());
             String id = startedJson.getString("id");
@@ -133,6 +153,10 @@ public class Master {
             System.out.println("started消息为：" + startedJson.toJSONString());
 
         }
+
+        long e = System.currentTimeMillis();
+        allTime.startLogicTime2 += (e-m);
+        allTime.startCount ++;
     }
 
     /**
@@ -142,24 +166,26 @@ public class Master {
      * }
      */
     public void stop(){
+        long s = System.currentTimeMillis();
 
         //打包成stop消息
         JSONObject stopJson = MsgUtil.createStop("");
         router.broadcastStopMsg(stopJson);
         leftNeedEva = 0;
+        isAutoQuery = false;
 
         //接收stopped消息
         for (int i = 0; i < router.getEvaluators().size(); i++) {
             String stoppedMsg = null;
             try {
-                stoppedMsg = router.getStoppedQueue().poll(200, TimeUnit.MILLISECONDS);
+                stoppedMsg = router.getStoppedQueue().poll(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             if(stoppedMsg == null){
                 break;
             }
-            isAutoQuery = false;
+
             JSONObject stoppedJson = (JSONObject) JSONUtil.stringToBean(stoppedMsg, new Object());
             String id = stoppedJson.getString("id");
 //            String ip = id.split(":")[0];
@@ -168,7 +194,11 @@ public class Master {
             System.out.println("收到" + id + "主机的stopped信息");
         }
 
-        evaInfoList.clear();
+//        evaInfoList.clear();
+
+        long e = System.currentTimeMillis();
+        allTime.stopLogicTime += (e-s);
+        allTime.stopCount ++;
     }
 
     /**
@@ -176,9 +206,11 @@ public class Master {
      * 	"type":"query"
      * 	"content":{}
      * }
+     *
      */
 
     public void query(){
+        long s = MillisecondClock.CLOCK.now();
 
         //打包成query消息并发送
         JSONObject queryJson = MsgUtil.createQuery("");
@@ -188,7 +220,7 @@ public class Master {
         for (int i = 0; i < router.getEvaluators().size(); i++) {
             String resultMsg = null;
             try {
-                resultMsg = router.getResultQueue().poll(100, TimeUnit.MILLISECONDS);
+                resultMsg = router.getResultQueue().poll(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -204,14 +236,6 @@ public class Master {
             System.out.println("收到" + id + "主机的"+ resultJson.getString("type") +"信息\n"
                     + resultJson.getString("type") + "消息为："+resultJson.toJSONString());
             Evaluator eva = router.getEvaluatorBy(ip, port);
-
-            //返回final消息，说明有Eva空闲，如果needEva！=0,再次启动start
-            if (resultJson.getString("type").equals("final")) {
-                eva.setStarted(false);
-                if (leftNeedEva > 0) {
-                    start(iteration, k, leftNeedEva);
-                }
-            }
 
             JSONObject content = resultJson.getObject("content", JSONObject.class);
             List<Integer> solution = jsonArrayToList(content.getJSONArray("solution"));
@@ -236,7 +260,26 @@ public class Master {
             evaInfo.setFitness(fitness);
             evaInfo.setIteration(iter);
             evaInfo.setTimecost(timecost);
+
+
+            //返回final消息，说明有Eva空闲，如果needEva！=0,再次启动start ，若=0且无eva运行则终止查询
+            if (resultJson.getString("type").equals("final")) {
+                eva.setStarted(false);
+                if (leftNeedEva > 0) {
+                    start(iteration, k, leftNeedEva);
+                }
+                else {
+                    if(router.evaIsAllStop()) {
+                        isAutoQuery = false;
+                        break;
+                    }
+                }
+            }
         }
+
+        long e = MillisecondClock.CLOCK.now();
+        allTime.queryLogicTime += (e-s);
+        allTime.queryCount ++;
 
     }
     public void autoQuery(long interval){
@@ -392,4 +435,6 @@ public class Master {
     public Router getRouter() {
         return router;
     }
+
+
 }

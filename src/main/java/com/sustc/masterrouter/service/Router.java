@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 /**
@@ -35,8 +36,8 @@ public class Router {
 
     private ExecutorService threadPoolService = Executors.newFixedThreadPool(10);
 
-
-
+    @Autowired
+    private AllTime allTime;
 
 
     public Evaluator getEvaluatorBy(String ip, int port){
@@ -57,22 +58,31 @@ public class Router {
     }
 
 
-    public int broadcastStartMsg(JSONObject json, int needEva, Master master){
+    public int broadcastStartMsg(JSONObject json, int needEva, Queue<List<List<Integer>>> populationQueue){
+
+        long s = System.currentTimeMillis();
 
         for (Evaluator eva : evaluators) {
             if (needEva == 0) {
                 return 0;
             }
             if (!eva.isStarted()) {
-                List<List<Integer>> population = master.generatePopulation(435, master.getK());
+
+
+                List<List<Integer>> population = populationQueue.poll();
                 JSONObject content = json.getJSONObject("content");
                 content.put("population", population);
 
                 sendMsg(json, eva.getIp(), eva.getPort(), startedQueue);
                 eva.setStarted(true);
                 needEva--;
+                allTime.startScheCount ++;
+
             }
         }
+        long e = System.currentTimeMillis();
+        allTime.startScheTime += (e-s);
+
         return needEva;
 
     }
@@ -108,9 +118,24 @@ public class Router {
     public void sendMsg(JSONObject json, String ip, Integer port, BlockingQueue<String> msgQueue){
 
         json.fluentPut("id", ip + ":" + port);
-        TCPClient tcpClient = new TCPClient(ip, port, json.toJSONString(), msgQueue);
+        TCPClient tcpClient = new TCPClient(ip, port, json.toJSONString(), msgQueue, allTime);
         threadPoolService.execute(tcpClient.getRunnable());
 
+    }
+
+    /**
+     * 判断是否所有eval全部空闲或终止
+     * @return
+     */
+    public boolean evaIsAllStop(){
+        boolean allstop = true;
+        for (Evaluator e: getEvaluators()) {
+            if(e.isStarted()){
+                allstop = false;
+                break;
+            }
+        }
+        return allstop;
     }
 
 
@@ -128,14 +153,6 @@ public class Router {
     public void setEvaluators(List<Evaluator> evaluators) {
         this.evaluators = evaluators;
     }
-
-//    public BlockingQueue<String> getRegisterQueue() {
-//        return registerQueue;
-//    }
-//
-//    public void setRegisterQueue(BlockingQueue<String> registerQueue) {
-//        this.registerQueue = registerQueue;
-//    }
 
     public BlockingQueue<String> getFiledQueue() {
         return filedQueue;

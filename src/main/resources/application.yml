@@ -6,7 +6,7 @@ spring:
     cache: false
 
 file:
-  path: "C://Users//kangbingjie//Desktop//my_poss.py"
+  path: "C://Users//kangbingjie//Desktop//process.cpp"
 master:
   ip: "localhost"
   port: "60001"

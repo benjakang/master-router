@@ -4,6 +4,7 @@ import com.sustc.masterrouter.domain.Evaluator;
 import com.sustc.masterrouter.service.Master;
 import com.sustc.masterrouter.service.Router;
 import com.sustc.masterrouter.utils.JSONUtil;
+import com.sustc.masterrouter.utils.MillisecondClock;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,22 @@ public class MybatisApplicationTests {
 
     @Autowired
     Master master;
+
+    @Test
+    public void test(){
+        long s = MillisecondClock.CLOCK.now();
+        long s1 = System.currentTimeMillis();
+        System.out.println(s);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(MillisecondClock.CLOCK.now());
+//        System.out.println(System.currentTimeMillis());
+    }
+
+
 //
 //    @Autowired
 //    Router router;
@@ -55,10 +72,10 @@ public class MybatisApplicationTests {
 //        System.out.println(master.getLeftNeedEva());
 //    }
 //
-    @Test
-    public void testStop(){
-        master.stop();
-    }
+//    @Test
+//    public void testStop(){
+//        master.stop();
+//    }
 //
 //    @Test
 //    public void testQuery(){

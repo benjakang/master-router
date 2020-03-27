@@ -28,13 +28,15 @@
 </head>
 <body>
     <h2 align="center">分代计算展示界面</h2>
+    <h7 align="center">详细步骤展示：<br>1.  点击上传文件进行上传；2.  设置参数，点击开始运行分配节点计算；
+    3.  运行状态时，点击结束运行，终止节点计算； 4.  最后点击清空状态，清除中间结果； 5. 以此重复可开启新一轮的分配计算</h7>
     <h5 class="page-header"></h5>
 
     <!--输入框组-->
     <div class="container" style="margin-bottom: 20px">
         <div class="input-group" style="margin-bottom: 10px;width: 400px;">
             <span class="input-group-addon" style="width: 150px">计算代数/iter：</span>
-            <input id="iter" type="text" class="form-control" placeholder="比如：100 (默认100)" th:value="${iter}"/>
+            <input id="iter" type="text" class="form-control" placeholder="比如：1000 (默认1000)" th:value="${iter}"/>
         </div>
         <div class="input-group" style="margin-bottom: 10px;width: 400px;">
             <span class="input-group-addon" style="width: 150px">问题规模/k：</span>
@@ -42,7 +44,7 @@
         </div>
         <div class="input-group" style="margin-bottom: 10px;width: 400px;">
             <span class="input-group-addon" style="width: 150px">启动个数/workers：</span>
-            <input id="workers" type="text" class="form-control" placeholder="比如：3 (默认3)" th:value="${workers}"/>
+            <input id="workers" type="text" class="form-control" placeholder="比如：1 (默认1)" th:value="${workers}"/>
         </div>
     </div>
 
@@ -58,6 +60,8 @@
     <script>
         function file1(){
             var url = "../file";
+            console.log("Body tag is %o", new Date().getTime());
+            // alert(new Date().getTime());
             window.location.href= url;
         }
         function start1(){
@@ -67,17 +71,17 @@
             var workers = document.getElementById('workers').value;
 
             if (iter == "") {
-                iter = "100";
+                iter = "1000";
             }
             if (k == "") {
                 k = "5";
             }
             if (workers == "") {
-                workers = "3";
+                workers = "1";
             }
             var url = "../start/"+"iter="+iter+"&k="+k+"&eva="+workers;
 
-            document.getElementById('iter').value = "100";
+            // document.getElementById('iter').value = "100";
             window.location.href= url;
         }
         function stop1(){
@@ -89,6 +93,77 @@
             window.location.href= url;
         }
     </script>
+
+    <!--时间展示-->
+    <h5 class="page-header"></h5>
+    <div class="container" align="left">
+        <h4>Master各部分耗时和次数展示</h4>
+        <table class="table table-bordered" style="width: 70%; height: auto;">
+            <thead>
+            <tr>
+                <th width="100px">汇总</th>
+                <th width="100px">File Logic</th>
+                <th width="100px">File Net</th>
+                <th width="100px">Start Schedule</th>
+                <th width="100px">Start Logic1</th>
+                <th width="100px">Start Logic2</th>
+                <th width="100px">Start Net</th>
+                <th width="100px">Stop Logic</th>
+                <th width="100px">Stop Net</th>
+                <th width="100px">Query Logic</th>
+                <th width="100px">Query Net</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <th width="100px">耗时</th>
+                <td><span th:text="${fileLogicTime}"/></td>
+                <td><span th:text="${fileNetTime}"/></td>
+                <td><span th:text="${startScheTime}"/></td>
+                <td><span th:text="${startLogicTime1}"/></td>
+                <td><span th:text="${startLogicTime2}"/></td>
+                <td><span th:text="${startNetTime}"/></td>
+                <td><span th:text="${stopLogicTime}"/></td>
+                <td><span th:text="${stopNetTime}"/></td>
+                <td><span th:text="${queryLogicTime}"/></td>
+                <td><span th:text="${queryNetTime}"/></td>
+            </tr>
+            </tbody>
+
+            <tbody>
+            <tr>
+                <th width="100px">次数</th>
+                <td><span th:text="${fileCount}"/></td>
+                <td><span th:text="${fileNetCount}"/></td>
+                <td><span th:text="${startScheCount}"/></td>
+                <td><span th:text="${startCount}"/></td>
+                <td><span th:text="${startCount}"/></td>
+                <td><span th:text="${startNetCount}"/></td>
+                <td><span th:text="${stopCount}"/></td>
+                <td><span th:text="${stopNetCount}"/></td>
+                <td><span th:text="${queryCount}"/></td>
+                <td><span th:text="${queryNetCount}"/></td>
+            </tr>
+            </tbody>
+
+            <tbody>
+            <tr>
+                <th width="100px">平均耗时</th>
+                <td><span th:text="${fileAvg}"/></td>
+                <td><span th:text="${fileNetAvg}"/></td>
+                <td><span th:text="${scheAvg}"/></td>
+                <td>--</td>
+                <td><span th:text="${startAvg}"/></td>
+                <td><span th:text="${startNetAvg}"/></td>
+                <td><span th:text="${stopAvg}"/></td>
+                <td><span th:text="${stopNetAvg}"/></td>
+                <td><span th:text="${queryAvg}"/></td>
+                <td><span th:text="${queryNetAvg}"/></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 
     <!--总体展示-->
     <h5 class="page-header"></h5>

@@ -2,6 +2,7 @@ package com.sustc.masterrouter.controller;
 
 
 import com.sustc.masterrouter.domain.Evaluator;
+import com.sustc.masterrouter.service.AllTime;
 import com.sustc.masterrouter.service.Master;
 import com.sustc.masterrouter.service.Router;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,19 +32,23 @@ class APIController {
     @Autowired
     private Master master;
 
+    @Autowired
+    private AllTime allTime;
+
     boolean doRefresh = false;
 
-    int itera = 100;
+    int itera = 1000;
 
     int k = 5;
 
-    int workers = 3;
+    int workers = 1;
 
 
     @RequestMapping("/file")
     String file() {
         master.file(new File(filePath));
         doRefresh = false;
+        //System.out.println("========================"+System.currentTimeMillis());
         return "redirect:/result";
     }
 
@@ -77,6 +82,9 @@ class APIController {
         for (Evaluator eva : list) {
             eva.setEvaInfo(null);
         }
+        allTime.clear();
+        master.getEvaInfoList().clear();
+
         doRefresh = false;
         return "redirect:/result";
     }
